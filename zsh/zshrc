@@ -1,0 +1,126 @@
+###.zshrc
+
+# export Environmental Variables
+export NVM_DIR="$HOME/.nvm"
+source "$(brew --prefix nvm)/nvm.sh"
+
+# set priority homebrew installed command : add "/usr/local/bin" to $PATH
+#export PATH=/usr/local/bin:$PATH
+
+# 色を使用出来るようにする
+autoload -Uz colors
+colors
+setopt promptsubst
+
+#promt
+#PROMPT="%{$fg[black] %(?.$bg[green].$bg[red])%} <%?> \$history[\$((\$HISTCMD-1))]%{$reset_color%}(%n@%m)[%h] %~ %% "
+if [ ${UID} -eq 501 ]; then
+	tmp_prompt='[%F{green}%n@%m%f]%# '
+	tmp_prompt2='%{${fg[cyan]}%}%_> %{${reset_color}%}'
+	tmp_rprompt='%(?.%K{green}%F{white}%d%f %F{white}%T%f%k.%K{red}%F{white}%d%f %F{white}%T%f%k)'
+	tmp_sprompt="%{${fg[yellow]}%}%r is correct? [Yes, No, Abort, Edit]:%{${reset_color}%}"
+else
+	tmp_prompt="%B%U${tmp_prompt}%u%b"
+	tmp_prompt2="%B%U${tmp_prompt2}%u%b"
+	tmp_rprompt="%B%U[%K{magenta}%F{white}%d%f %F{blue}%T%f%k]%u%b"
+	tmp_sprompt="%B%U${tmp_sprompt}%u%b"
+fi
+
+PROMPT=$tmp_prompt    # 通常のプロンプト
+PROMPT2=$tmp_prompt2  # セカンダリのプロンプト
+RPROMPT=$tmp_rprompt  # 右側のプロンプト
+SPROMPT=$tmp_sprompt  # スペル訂正用プロンプト
+
+# key bindings like Emacs
+bindkey -e
+
+# use command completion
+autoload -U compinit; compinit
+
+# 入力がディレクトリ名と一致するなら、ディレクトリに cd する
+setopt auto_cd
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# "~hoge" が特定のパス名に展開されるようにする（ブックマークのようなもの）
+# 例： cd ~hoge と入力すると /long/path/to/hogehoge ディレクトリに移動
+#hash -d hoge=/long/path/to/hogehoge
+
+# cd した先のディレクトリをディレクトリスタックに追加する
+# `cd +<Tab>` でディレクトリの履歴が表示され、そこに移動できる
+setopt auto_pushd
+setopt pushd_ignore_dups
+
+# ヒストリの設定
+HISTFILE=~/.zsh_history
+HISTSIZE=1000000
+SAVEHIST=1000000
+# ヒストリに保存するときに余分なスペースを削除する
+setopt hist_reduce_blanks
+
+# 拡張 glob を有効にする
+setopt extended_glob
+typeset -A abbreviations
+abbreviations=(
+    "G"    "| grep"
+    "X"    "| xargs"
+    "T"    "| tail"
+    "C"    "| cat"
+    "W"    "| wc"
+    "A"    "| awk"
+    "S"    "| sed"
+	"L"    "| less"
+    "E"    "2>&1 > /dev/null"
+    "N"    "> /dev/null"
+)
+
+magic-abbrev-expand() {
+    local MATCH
+    LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
+    LBUFFER+=${abbreviations[$MATCH]:-$MATCH}
+    zle self-insert
+}
+
+no-magic-abbrev-expand() {
+    LBUFFER+=' '
+}
+
+zle -N magic-abbrev-expand
+zle -N no-magic-abbrev-expand
+bindkey " " magic-abbrev-expand
+bindkey "^x " no-magic-abbrev-expand
+
+# コマンド履歴を重複させない
+setopt hist_ignore_all_dups
+
+# コマンドがスペースで始まる場合、コマンド履歴に追加しない
+setopt hist_ignore_space
+
+# 同時に起動したzshの間でヒストリを共有する
+setopt share_history
+
+# <Tab> でパス名の補完候補を表示したあと、
+# 続けて <Tab> を押すと候補からパス名を選択できるようになる
+# 候補を選ぶには <Tab> か Ctrl-N,B,F,P
+zstyle ':completion:*:default' menu select=1
+# 補完の時大文字・小文字を区別しない
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+# sudo の後ろでコマンド名を補完する
+zstyle ':completion:*:sudo:*' command-path /usr/local/bin /usr/bin /bin /usr/sbin /sbin
+
+# 単語の一部として扱われる文字のセットを指定する
+# ここではデフォルトのセットから / を抜いたものとする
+# こうすると、 Ctrl-W でカーソル前の1単語を削除したとき、 / までで削除が止まる
+WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+
+# 日本語ファイル名を表示可能にする
+setopt print_eight_bit
+
+# beep を無効にする
+setopt no_beep
+
+# aliases
+alias ls='ls -FGH'
+alias ll='ls -FGHl'
+alias la='ls -FGHlA'
+alias cp='cp -a'
