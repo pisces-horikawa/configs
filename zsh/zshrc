@@ -14,11 +14,21 @@ setopt promptsubst
 
 #promt
 #PROMPT="%{$fg[black] %(?.$bg[green].$bg[red])%} <%?> \$history[\$((\$HISTCMD-1))]%{$reset_color%}(%n@%m)[%h] %~ %% "
+
 if [ ${UID} -eq 501 ]; then
-	tmp_prompt='[%F{green}%n@%m%f]%# '
-	tmp_prompt2='%{${fg[cyan]}%}%_> %{${reset_color}%}'
-	tmp_rprompt='%(?.%K{green}%F{white}%d%f %F{white}%T%f%k.%K{red}%F{white}%d%f %F{white}%T%f%k)'
-	tmp_sprompt="%{${fg[yellow]}%}%r is correct? [Yes, No, Abort, Edit]:%{${reset_color}%}"
+	if [ "$EMACS" ];then
+		# Emacs 内で起動した時の処理
+		tmp_prompt='[%n@%m]%# '
+		tmp_prompt2='%_> '
+		tmp_rprompt=''
+		tmp_sprompt='%r is correct? [Yes, No, Abort, Edit]:'
+	else
+		# Terminal から起動した時の処理
+		tmp_prompt='[%F{green}%n@%m%f]%# '
+		tmp_prompt2='%{${fg[cyan]}%}%_> %{${reset_color}%}'
+		tmp_rprompt='%(?.%K{green}%F{white}%d%f %F{white}%T%f%k.%K{red}%F{white}%d%f %F{white}%T%f%k)'
+		tmp_sprompt="%{${fg[yellow]}%}%r is correct? [Yes, No, Abort, Edit]:%{${reset_color}%}"
+	fi
 else
 	tmp_prompt="%B%U${tmp_prompt}%u%b"
 	tmp_prompt2="%B%U${tmp_prompt2}%u%b"

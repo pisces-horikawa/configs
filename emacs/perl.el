@@ -1,27 +1,81 @@
-;;
-(defalias 'perl-mode 'cperl-mode)
-(setq auto-mode-alist (append '(("\\.psgi$" . cperl-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.cgi$" . cperl-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.pl$" . cperl-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.pm$" . cperl-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.t$" . cperl-mode)) auto-mode-alist))
+;; -*- mode: emacs-lisp; coding: utf-8-emacs; -*-
 
-;; tab width
-(setq cperl-indent-level 4)
+(defalias 'perl-mode 'cperl-mode)
+
+(setq auto-mode-alist
+	  (append
+	   '(("\\.psgi$" . cperl-mode))
+	   '(("\\.cgi$"  . cperl-mode))
+	   '(("\\.pl$"   . cperl-mode))
+	   '(("\\.pm$"   . cperl-mode))
+	   '(("\\.t$"    . cperl-mode))
+	   auto-mode-alist))
+
+(defun perl-eval (beg end)
+  (interactive "r")
+  (save-excursion
+    (shell-command-on-region beg end "perl")))
+
+;; perl-completion
+(add-hook 'cperl-mode-hook
+          (lambda()
+            (require 'perl-completion)
+            (perl-completion-mode t)))
+(add-hook  'cperl-mode-hook
+           (lambda ()
+             (when (require 'auto-complete nil t)
+               (auto-complete-mode t)
+               (make-variable-buffer-local 'ac-sources)
+               (setq ac-sources
+                     '(ac-source-perl-completion)))))
 
 (add-hook 'cperl-mode-hook
           '(lambda ()
-             ;; インデント設定
-             (cperl-set-style "PerlStyle")
-             (custom-set-variables
-              '(cperl-indent-parens-as-block t)
-              '(cperl-close-paren-offset -4)
-              '(cperl-indent-subs-specially nil))
-             ;; ドキュメントを表示する
+             (setq indent-tabs-mode nil)
+             (setq cperl-close-paren-offset -4)
+             (setq cperl-continued-statement-offset 4)
+             (setq cperl-indent-level 4)
+             (setq cperl-indent-parens-as-block t)
+             (setq cperl-tab-always-indent t)
+             (custom-set-variables '(cperl-indent-subs-specially nil))
+			 (define-key cperl-mode-map "\C-cp" 'perl-eval)
+             (define-key cperl-mode-map [(super T)] 'run-perl-test)
+             (define-key cperl-mode-map [(super t)] 'run-perl-method-test)
              (define-key global-map (kbd "M-p") 'cperl-perldoc)
+             (local-set-key (kbd "C-c C-c C-u") 'popup-editor-perl-use)
+             (font-lock-add-keywords
+              'cperl-mode
+              '(
+                ("!" . font-lock-warning-face)
+                (":" . font-lock-warning-face)
+                ("TODO" 0 'font-lock-warning-face)
+                ("XXX" 0 'font-lock-warning-face)
+                ("Hatean" 0 'font-lock-warning-face)
+                ))
              ))
 
-;;; ソースを見る
+(add-hook 'cperl-mode-hook 'flycheck-mode)
+;(with-eval-after-load "flycheck"
+;  (flycheck-define-checker
+;	  perl-project-libs
+;	"A perl syntax checker."
+;	:command ("perl" "-MProject::Libs" "-wc" source-inplace)
+;	:error-patterns ((error line-start
+;							(minimal-match (message))
+;							" at " (file-name) " line " line
+;							(or "." (and ", " (zero-or-more not-newline)))
+;							line-end))
+;	:modes (cperl-mode)))
+;(add-hook 'cperl-mode-hook
+;          (lambda ()
+;            (unless (or (and (fboundp 'tramp-tramp-file-p)
+;                             (tramp-tramp-file-p buffer-file-name))
+;                        (string-match "sudo:.*:" (buffer-file-name)))
+;              (progn
+;                (flycheck-mode t)
+;                (setq flycheck-checker 'perl-project-libs)))))
+
+;; ソースを見る
 (put 'perl-module-thing 'end-op
      (lambda ()
        (re-search-forward "\\=[a-zA-Z][a-zA-Z0-9_:]*" nil t)))
@@ -54,39 +108,3 @@
           (if pop-or-set-flag
               (switch-to-buffer buffer)
             (display-buffer buffer)))))))
-
-(global-set-key (kbd "M-m") 'perldoc-m)
-
-;; perl-completion
-(add-hook 'cperl-mode-hook
-          (lambda()
-            (require 'perl-completion)
-            (perl-completion-mode t)))
-
-;(add-hook  'cperl-mode-hook
-;           (lambda ()
-;             (when (require 'auto-complete nil t)
-;               (auto-complete-mode t)
-;               (make-variable-buffer-local 'ac-sources)
-;               (setq ac-sources
-;                     '(ac-source-perl-completion)))))
-
-;(with-eval-after-load "flycheck"
-;  (flycheck-define-checker
-;   perl-project-libs
-;   "A perl syntax checker."
-;   :command ("perl" "-MProject::Libs" "-wc" source-inplace)
-;   :error-patterns ((error line-start
-;                           (minimal-match (message))
-;                           " at " (file-name) " line " line
-;                           (or "." (and ", " (zero-or-more not-newline)))
-;                           line-end))
-;   :modes (cperl-mode)))
-;(add-hook 'cperl-mode-hook
-;          (lambda ()
-;            (unless (or (and (fboundp 'tramp-tramp-file-p)
-;                             (tramp-tramp-file-p buffer-file-name))
-;                        (string-match "sudo:.*:" (buffer-file-name)))
-;              (progn
-;                (flycheck-mode t)
-;                (setq flycheck-checker 'perl-project-libs)))))
