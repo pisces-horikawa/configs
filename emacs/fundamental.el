@@ -31,7 +31,14 @@
 ;; key bind & behavior
 ;;______________________________________________________________________
 
-;; key bindings
+;; fold-dwim
+(global-set-key "\C-c\C-f" 'fold-dwim-toggle)
+(global-set-key "\C-c\C-h" 'fold-dwim-hide-all)
+(global-set-key "\C-c\C-g" 'fold-dwim-show-all)
+;; key binding
+(global-set-key "\M-("     'replace-string)
+(global-set-key "\M-)"     'replace-regexp)
+(global-set-key "\C-c\C-l" 'toggle-truncate-lines)
 (global-set-key "\C-z" 'undo)
 (global-unset-key "\M-z")
 (global-unset-key "\M-c")
@@ -160,3 +167,63 @@
   "Opens FILE with root privileges."
   (interactive "F")
   (set-buffer (find-file (concat "/sudo::" file))))
+
+;;
+;; interpreter
+;;______________________________________________________________________
+(defvar interpreter-mode-alist
+  ;; Note: The entries for the modes defined in cc-mode.el (awk-mode
+  ;; and pike-mode) are added through autoload directives in that
+  ;; file.  That way is discouraged since it spreads out the
+  ;; definition of the initial value.
+  (mapcar
+   (lambda (l)
+     (cons (purecopy (car l)) (cdr l)))
+   '(("perl"     . perl-mode)
+     ("perl5"    . perl-mode)
+     ("miniperl" . perl-mode)
+     ("ash"      . sh-mode)
+     ("bash"     . sh-mode)
+     ("bash2"    . sh-mode)
+     ("csh"      . sh-mode)
+     ("dtksh"    . sh-mode)
+     ("es"       . sh-mode)
+     ("itcsh"    . sh-mode)
+     ("jsh"      . sh-mode)
+     ("ksh"      . sh-mode)
+     ("oash"     . sh-mode)
+     ("pdksh"    . sh-mode)
+     ("rc"       . sh-mode)
+     ("rpm"      . sh-mode)
+     ("sh"       . sh-mode)
+     ("sh5"      . sh-mode)
+     ("tcsh"     . sh-mode)
+     ("wksh"     . sh-mode)
+     ("wsh"      . sh-mode)
+     ("zsh"      . sh-mode)
+     ("tail"     . text-mode)
+     ("more"     . text-mode)
+     ("less"     . text-mode)
+     ("pg"       . text-mode)
+     ("make"     . makefile-gmake-mode)
+     ("guile"    . scheme-mode)
+     ("clisp"    . lisp-mode)))
+  "Alist mapping interpreter names to major modes.
+This is used for files whose first lines match `auto-mode-interpreter-regexp'.
+Each element looks like (INTERPRETER . MODE).
+If INTERPRETER matches the name of the interpreter specified in the first line
+of a script, mode MODE is enabled.
+
+See also `auto-mode-alist'.")
+
+(add-to-list 'interpreter-mode-alist '("ruby"       . ruby-mode))
+(add-to-list 'interpreter-mode-alist '("node"       . js2-mode))
+(add-to-list 'interpreter-mode-alist '("runghc"     . haskell-mode))
+(add-to-list 'interpreter-mode-alist '("runhaskell" . haskell-mode))
+
+(setq auto-mode-alist
+	  (append
+	   '(("zshrc$"  . shell-script-mode))
+	   '(("bashrc$" . shell-script-mode))
+	   auto-mode-alist))
+

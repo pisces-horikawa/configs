@@ -11,23 +11,23 @@
 	   '(("\\.t$"    . cperl-mode))
 	   auto-mode-alist))
 
+;; Perl デバッガの設定
+(autoload 'perl-debug "perl-debug" nil t)
+(autoload 'perl-debug-lint "perl-debug" nil t)
+
 (defun perl-eval (beg end)
   (interactive "r")
   (save-excursion
     (shell-command-on-region beg end "perl")))
+(add-hook 'cperl-mode-hook
+          '(lambda ()
+			 (define-key cperl-mode-map "\C-cp" 'perl-eval)))
 
 ;; perl-completion
 (add-hook 'cperl-mode-hook
-          (lambda()
-            (require 'perl-completion)
-            (perl-completion-mode t)))
-(add-hook  'cperl-mode-hook
-           (lambda ()
-             (when (require 'auto-complete nil t)
-               (auto-complete-mode t)
-               (make-variable-buffer-local 'ac-sources)
-               (setq ac-sources
-                     '(ac-source-perl-completion)))))
+		  (lambda ()
+			(require 'perl-completion)
+			(add-to-list 'ac-sources 'ac-source-perl-completion)))
 
 (add-hook 'cperl-mode-hook
           '(lambda ()
@@ -53,6 +53,14 @@
                 ("Hatean" 0 'font-lock-warning-face)
                 ))
              ))
+
+(custom-set-faces
+ '(cperl-array-face (
+					 (((class color) (background light))
+					  (:foreground "Blue" :weight normal))))
+ '(cperl-hash-face  (
+					 (((class color) (background light))
+					  (:foreground "Red" :slant italic :weight normal)))))
 
 (add-hook 'cperl-mode-hook 'flycheck-mode)
 ;(with-eval-after-load "flycheck"

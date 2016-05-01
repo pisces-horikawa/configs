@@ -1,4 +1,4 @@
-###.zshrc
+#/bin/zsh
 
 # export Environmental Variables
 export NVM_DIR="$HOME/.nvm"
@@ -7,14 +7,15 @@ source "$(brew --prefix nvm)/nvm.sh"
 # set priority homebrew installed command : add "/usr/local/bin" to $PATH
 #export PATH=/usr/local/bin:$PATH
 
+#autoload predict-on
+#predict-on
+
 # 色を使用出来るようにする
 autoload -Uz colors
 colors
 setopt promptsubst
 
-#promt
-#PROMPT="%{$fg[black] %(?.$bg[green].$bg[red])%} <%?> \$history[\$((\$HISTCMD-1))]%{$reset_color%}(%n@%m)[%h] %~ %% "
-
+#prompt
 if [ ${UID} -eq 501 ]; then
 	if [ "$EMACS" ];then
 		# Emacs 内で起動した時の処理
@@ -36,10 +37,10 @@ else
 	tmp_sprompt="%B%U${tmp_sprompt}%u%b"
 fi
 
-PROMPT=$tmp_prompt    # 通常のプロンプト
-PROMPT2=$tmp_prompt2  # セカンダリのプロンプト
-RPROMPT=$tmp_rprompt  # 右側のプロンプト
-SPROMPT=$tmp_sprompt  # スペル訂正用プロンプト
+PROMPT=$tmp_prompt
+PROMPT2=$tmp_prompt2
+RPROMPT=$tmp_rprompt
+SPROMPT=$tmp_sprompt
 
 # key bindings like Emacs
 bindkey -e
@@ -129,7 +130,7 @@ setopt print_eight_bit
 # beep を無効にする
 setopt no_beep
 
-# aliases
+# other aliases
 alias ls='ls -FGH'
 alias ll='ls -FGHl'
 alias la='ls -FGHlA'

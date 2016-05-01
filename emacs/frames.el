@@ -43,82 +43,10 @@
 ;; mode line
 ;;______________________________________________________________________
 
-;(line-number-mode t)
-;(column-number-mode t)
-;(set-face-attribute 'mode-line nil  :height 140)
-;
-;;; 改行コードを表示する
-;(setq eol-mnemonic-dos  "(CRLF)")
-;(setq eol-mnemonic-mac  "(CR)")
-;(setq eol-mnemonic-unix "(LF)")
-;;; モードラインの割合表示を総行数表示
-;(defvar my-lines-page-mode t)
-;(defvar my-mode-line-format)
-;;; display full length path
-;;(set-default 'mode-line-buffer-identification
-;;             '(buffer-file-name ("%f") ("%b")))
-;(defvar mode-line-buffer-fullpath
-;  (list 'buffer-file-name
-;        (propertized-buffer-identification "%12f")
-;        (propertized-buffer-identification "%12b")))
-;
-;(add-hook 'dired-mode-hook
-;          (lambda ()
-;            ;; TODO: handle (DIRECTORY FILE ...) list value for dired-directory
-;            (setq mode-line-buffer-identification
-;                  ;; emulate "%17b" (see dired-mode):
-;                  '(:eval
-;                    (propertized-buffer-identification
-;                     (if (< (length default-directory) 17)
-;                         (concat default-directory
-;                                 (make-string (- 17 (length default-directory))
-;                                              ?\s))
-;                       default-directory))))))
-;
-;(setq  mode-line-buffer-default mode-line-buffer-identification)
-;
-;(defun show-mode-line-fullpath (event)
-;  (interactive "e")
-;  (when (buffer-file-name)
-;    (select-window (posn-window (event-start event))) ; activate window
-;    (let ((wait-sec 5))
-;      (setq mode-line-buffer-identification mode-line-buffer-fullpath)
-;      (force-mode-line-update)
-;      ;(my-copy-buffer-file-name)                      ; copy path string to killring
-;      (sit-for wait-sec)
-;      (setq mode-line-buffer-identification mode-line-buffer-default)
-;      (force-mode-line-update)
-;      (message ""))))
-;
-;(define-key mode-line-buffer-identification-keymap [mode-line mouse-1] 'show-mode-line-fullpath) ; left click
-;(set-face-attribute 'mode-line-highlight nil :box nil) ; remove box when hover mouse
-;
-;(defun my-copy-buffer-file-name ()
-;  "copy buffer-file-name to kill-ring."
-;  (interactive)
-;  (let ((fn (unwind-protect
-;                (buffer-file-name)
-;              nil)))
-;    (if fn
-;        (let ((f (abbreviate-file-name (expand-file-name fn))))
-;          (kill-new f)
-;          (message "copied: \"%s\"" f))
-;      (message "no file name"))))
-;
-;(when my-lines-page-mode
-;  (setq my-mode-line-format "%d")
-;  (if size-indication-mode
-;      (setq my-mode-line-format (concat my-mode-line-format " of %%I")))
-;  (cond ((and (eq line-number-mode t) (eq column-number-mode t))
-;         (setq my-mode-line-format (concat my-mode-line-format " (%%l,%%c)")))
-;        ((eq line-number-mode t)
-;         (setq my-mode-line-format (concat my-mode-line-format " L%%l")))
-;        ((eq column-number-mode t)
-;         (setq my-mode-line-format (concat my-mode-line-format " C%%c"))))
-;  (setq mode-line-position
-;        '(:eval (format my-mode-line-format
-;                        (count-lines (point-max) (point-min))))))
-;
+;; EOL format
+(setq eol-mnemonic-dos  "(DS)")
+(setq eol-mnemonic-mac  "(CR)")
+(setq eol-mnemonic-unix "(LF)")
 
 ;; Mode line setup
 (setq-default
@@ -127,11 +55,16 @@
    (:propertize "%4l:" face mode-line-position-face)
    (:eval (propertize "%3c" 'face
                       (if (>= (current-column) 80)
-                          'mode-line-80col-face
-                        'mode-line-position-face)))
+						  'mode-line-80col-face
+						'mode-line-position-face)))
    ;; emacsclient [default -- keep?]
    mode-line-client
    "  "
+   ;; directory and buffer/file name
+   (:propertize (:eval (shorten-directory default-directory 30))
+                face mode-line-folder-face)
+   (:propertize "%b"
+                face mode-line-filename-face)
    ;; read-only or modified status
    (:eval
     (cond (buffer-read-only
@@ -139,13 +72,9 @@
           ((buffer-modified-p)
            (propertize " %%%% " 'face 'mode-line-modified-face))
           (t " -- ")))
-   ;; space
-   "    "
-   ;; directory and buffer/file name
-   (:propertize (:eval (shorten-directory default-directory 30))
-                face mode-line-folder-face)
-   (:propertize "%b"
-                face mode-line-filename-face)
+   ;; EOL format
+   (:propertize " %Z "
+                face mode-line-eol-face)
    ;; narrow [default -- keep?]
    " %n "
    ;;mode indicators: vc, recursive edit, major mode, minor modes, process, global
@@ -160,8 +89,6 @@
                 face mode-line-process-face)
    (global-mode-string global-mode-string)
    "    "
-   ; nyan-mode uses nyan cat as an alternative to %p
-   ;(:eval (when nyan-mode (list (nyan-create))))
    ))
 ;; Helper function
 (defun shorten-directory (dir max-length)
@@ -183,6 +110,7 @@
 (make-face 'mode-line-folder-face)
 (make-face 'mode-line-filename-face)
 (make-face 'mode-line-position-face)
+(make-face 'mode-line-eol-face)
 (make-face 'mode-line-mode-face)
 (make-face 'mode-line-minor-mode-face)
 (make-face 'mode-line-process-face)
@@ -191,30 +119,29 @@
 (set-face-attribute 'mode-line nil
 					:foreground "#434643" :background "#B6B8B6"
 					:inverse-video nil)
-					;:box '(:line-width 6 :color "gray20" :style nil))
 (set-face-attribute 'mode-line-inactive nil
-    :foreground "#434643" :background "#F1F3F1";;"#B6B8B6"
+    :foreground "#434643" :background "#F1F3F1"
     :inverse-video nil)
-    ;:box '(:line-width 6 :color "gray40" :style nil))
 (set-face-attribute 'mode-line-read-only-face nil
     :inherit 'mode-line-face
-    :foreground "#4271ae")
-    ;:box '(:line-width 2 :color "#4271ae"))
+    :foreground "#31ac31")
 (set-face-attribute 'mode-line-modified-face nil
     :inherit 'mode-line-face
-    :foreground "#f3f5f3"
+    :foreground "#CC5151"
     :background "#C6C8C6")
-    ;:box '(:line-width 2 :color "#c82829"))
 (set-face-attribute 'mode-line-folder-face nil
     :inherit 'mode-line-face
     :foreground "#434643")
 (set-face-attribute 'mode-line-filename-face nil
     :inherit 'mode-line-face
-    :foreground "#434643"
-    :weight 'bold)
+    :foreground "#934643"
+    :slant 'italic)
 (set-face-attribute 'mode-line-position-face nil
     :inherit 'mode-line-face
     :family "Menlo" :height 100)
+(set-face-attribute 'mode-line-eol-face nil
+    :inherit 'mode-line-face
+    :family "Menlo" :height 120)
 (set-face-attribute 'mode-line-mode-face nil
     :inherit 'mode-line-face
     :foreground "#434643")
@@ -240,7 +167,7 @@
 		   '(left         . 2)
 		   '(width        . 87)  ;; 113
 		   '(height       . 51)  ;;  64
-		   '(line-spacing . 3)
+		   '(line-spacing . 2)
 		   '(foreground-color                    . "#191719")
 		   '(background-color                    . "#F1F3F1")
 		   '(cursor-color                        . "SlateBlue3")
